@@ -1,4 +1,4 @@
-This is a microservice meant for streaming data via SSE HTTP channels.
+This is a microservice meant for streaming data via SSE. It uses the PUB/SUB pattern.
 
 For an explanation of SSE watch this video: https://www.youtube.com/watch?v=71hId_-Iwqc
 
