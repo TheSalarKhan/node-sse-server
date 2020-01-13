@@ -1,0 +1,20 @@
+{
+  "name": "node-sse-server",
+  "version": "1.0.0",
+  "description": "SSE based event streaming server for real time use cases.",
+  "main": "app.js",
+  "scripts": {
+    "start": "NODE_ENV=production PORT=9090 node app.js",
+    "dev": "NODE_ENV=production PORT=9090 DEBUG_LOGS=true nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Muhammad Salar Khan <github.com/TheSalarKhan>",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  }
+}
