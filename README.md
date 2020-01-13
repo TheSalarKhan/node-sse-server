@@ -1,4 +1,4 @@
-This is a server meant for streaming data via SSE HTTP channels.
+This is a microservice meant for streaming data via SSE HTTP channels.
 
 For an explanation of SSE watch this video: https://www.youtube.com/watch?v=71hId_-Iwqc
 
@@ -100,4 +100,9 @@ body:
 			}
 		]
 	}
+```
+
+## TODOS
+```
+* Security: Token or Secret based.
 ```
