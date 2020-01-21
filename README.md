@@ -2,6 +2,9 @@ This is a microservice meant for streaming data via SSE. It uses the PUB/SUB pat
 
 For an explanation of SSE watch this video: https://www.youtube.com/watch?v=71hId_-Iwqc
 
+One can poteltially also use this as an online presence microservice, as the server keeps a list of connected clients,
+we can choose to stream that as another sse endpoint, or we can have a REST api endpoint for querying the information of
+a certain client, or get a list of all the connected clientIds.
 
 ## Example
 
