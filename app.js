@@ -8,7 +8,7 @@ let app = express();
 const maxRequestSize = 100; // 100KB of publish is allowed at max.
 app.use(bodyParser.json({ limit: maxRequestSize * 1024 }));
 
-app.get('/', function (res) {
+app.get('/', function (req, res) {
 	res.status(200).end("ROOT");
 });
 
