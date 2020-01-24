@@ -7,7 +7,6 @@ function debugLog(objToLog) {
 /**
  * channels: {
  *  'channel1': {
- *      createdOn: 1231455, // UNIX timestamp.
  *      lastValue: "last_published_value_here",
  *      clients: {
  *          "client1": client1ResObject,
@@ -96,6 +95,24 @@ function saveClientToChannel(channelName, clientId, req, res) {
     debugLog(channels);
 }
 
+function doInitialSSESetup(req, res) {
+    // Previously the timeout was set to Number.MAX_SAFE_INTEGER
+    // but on everyconnection the server would throw a
+    // "TimeoutOverflowWarning" saying that:
+    // "Timer duration was truncated to 2147483647."
+    // So, that's why this number.
+    const MAX_SOCKET_TIMEOUT = 2147483647;
+    // Initial setup for SSE.
+	req.socket.setTimeout(MAX_SOCKET_TIMEOUT);
+	res.writeHead(200, {
+        'Access-Control-Allow-Origin': "*",
+		'Content-Type': 'text/event-stream',
+		'Cache-Control': 'no-cache',
+		'Connection': 'keep-alive'
+	});
+    res.write('\n');
+}
+
 /**
  * Registers a client for the first time:
  *  i) Saves it to the channel
@@ -105,6 +122,8 @@ function saveClientToChannel(channelName, clientId, req, res) {
  * @param {*} res
  */
 module.exports.registerClient = function (channelNames, clientId, req, res) {
+    // Set timeout and headers.
+    doInitialSSESetup(req, res);
     // Send the client id to the client for debugging purposes.
     // TODO: Need to add logging for client trace.
     publishDataToSingleClient(undefined, res, "registered", JSON.stringify({ clientId }));

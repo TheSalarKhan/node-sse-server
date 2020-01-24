@@ -15,7 +15,8 @@ app.get('/', function (req, res) {
 // AutoIncrement clientId.
 let clientId = 0;
 
-// Called once for each new client. Note, this response is left open!
+// Subscribe endpoint. This endpoint is used to subscribe
+// to one or more channels.
 app.get('/subscribe', function (req, res) {
     if(!req.query.channels) {
         res.status(400).end("Bad Request");
@@ -27,15 +28,6 @@ app.get('/subscribe', function (req, res) {
     const channelNames = req.query.channels.split(',');
     const newClientId = req.query.clientId ? req.query.clientId : ++clientId;
 
-    // Initial setup for SSE.
-	req.socket.setTimeout(Number.MAX_SAFE_INTEGER);
-	res.writeHead(200, {
-        'Access-Control-Allow-Origin': "*",
-		'Content-Type': 'text/event-stream',
-		'Cache-Control': 'no-cache',
-		'Connection': 'keep-alive'
-	});
-    res.write('\n');
 
     // Reister client.
     lib.registerClient(channelNames, newClientId, req, res);
