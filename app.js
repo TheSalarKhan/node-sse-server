@@ -73,4 +73,6 @@ app.post('/publish/', function(req, res) {
     res.status(200).end();
 });
 
-app.listen(process.env.PORT || 8080);
+app.listen(process.env.PORT || 9090, () => {
+    console.log(`Server listening on port: ${process.env.PORT || 9090}`);
+});
