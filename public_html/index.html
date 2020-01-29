@@ -1,7 +1,10 @@
 <!DOCTYPE html> <html> <body>
 	<script type="text/javascript">
+	    function getRandomNumberBetweenRange(x, y) {
+			return Math.floor((Math.random() * y) + x);
+		}
 		const channelsToSubscribe = ["channel1", "channel2"];
-		const source = new EventSource(`http://localhost:9090/subscribe/?channels=${encodeURIComponent(channelsToSubscribe.join(","))}&clientId=${encodeURIComponent("5df290834$@#$")}`);
+		const source = new EventSource(`http://localhost:9090/subscribe/?channels=${encodeURIComponent(channelsToSubscribe.join(","))}&clientId=${encodeURIComponent("5df2")}${encodeURIComponent(getRandomNumberBetweenRange(1, 100))}`);
 
 		function _getEventData(event) {
 			const data = JSON.parse(event.data);
@@ -17,6 +20,10 @@
 		}
 		// Fires once on a successful subscription.
 		source.addEventListener("registered", (event) => {
+			console.log(_getEventData(event));
+		});
+		// Fires everytime someone connects to the server.
+		source.addEventListener("online-presence", (event) => {
 			console.log(_getEventData(event));
 		});
 		// Fires once for every subscribed channel, giving the last

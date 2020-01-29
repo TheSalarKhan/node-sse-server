@@ -35,6 +35,26 @@ function publishDataToSingleClient(channelName, res, eventType, payload) {
     res.write(`data: ${dataToWrite}\n\n`);
 }
 
+// This object manages online presence.
+let connectedClients = {
+    _clients: {},
+    _broadcastChange: function() {
+        for(const [clientId, res] of Object.entries(this._clients)) {
+            publishDataToSingleClient(undefined, res, "online-presence", JSON.stringify(Object.keys(this._clients)));
+        }
+    },
+    addClientAndNotifyOthers: function(clientId, res) {
+        if(this._clients[clientId]) return;
+        this._clients[clientId] = res;
+        this._broadcastChange();
+    },
+    removeClientAndNotifyOthers: function(clientId) {
+        if(!this._clients[clientId]) return;
+        delete this._clients[clientId];
+        this._broadcastChange();
+    }
+};
+
 /**
  * Initializes a channel in the 'channels' object.
  * @param {*} channelName
@@ -56,9 +76,8 @@ function createChannel(channelName, initialValue, clients={}) {
  * @param {*} res Client's express res object.
  */
 function saveClientToChannel(channelName, clientId, req, res) {
-    // 1) if the channel already exists.
     if(channels[channelName]) {
-        // 1.1) If the client list is already created, add this client
+        // 1a.1) If the client list is already created, add this client
         // to the client list. Else, create the
         // client list add, this client as the first client.
         const clientsForThisChannel = channels[channelName].clients;
@@ -74,7 +93,7 @@ function saveClientToChannel(channelName, clientId, req, res) {
             };
         }
     } else {
-        // 2) If the channel does not exist, creat the channel, set "{}" as the lastValue,
+        // 1b) If the channel does not exist, creat the channel, set "{}" as the lastValue,
         // add the client in the client list.
         createChannel(channelName, "{}", {
             [clientId]: res
@@ -86,7 +105,8 @@ function saveClientToChannel(channelName, clientId, req, res) {
     req.on("close", function () {
         const clients = channels[channelName].clients;
         delete clients[clientId];
-
+        // Also remove the client from the connectedClients singleton.
+        connectedClients.removeClientAndNotifyOthers(clientId);
         debugLog(`Client ${clientId} removed `);
         debugLog(channels);
     });
@@ -127,14 +147,18 @@ module.exports.registerClient = function (channelNames, clientId, req, res) {
     // Send the client id to the client for debugging purposes.
     // TODO: Need to add logging for client trace.
     publishDataToSingleClient(undefined, res, "registered", JSON.stringify({ clientId }));
+    // Add the client to all the requested channels
     for(const channelName of channelNames) {
         saveClientToChannel(channelName, clientId, req, res);
         const lastChannelEvent = channels[channelName].lastEvent;
         publishDataToSingleClient(channelName, res, "lastEvent", lastChannelEvent);
     }
+    // Finally, add the client to the connectedClients singleton and notify all
+    // connected users.
+    connectedClients.addClientAndNotifyOthers(clientId, res);
 }
 
-module.exports.reservedEvents = ["registered", "lastEvent"];
+module.exports.reservedEvents = ["registered", "lastEvent", "online-presence"];
 
 
 module.exports.publishDataToChannel = function (channelName, eventType, payload) {
