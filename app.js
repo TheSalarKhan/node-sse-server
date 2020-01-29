@@ -1,12 +1,14 @@
 const express = require('express');
 const bodyParser = require("body-parser");
 const lib = require('./lib');
-
+const cors = require('cors')
 
 // Express App starts from here.
 let app = express();
 const maxRequestSize = 100; // 100KB of publish is allowed at max.
 app.use(bodyParser.json({ limit: maxRequestSize * 1024 }));
+
+app.use(cors());
 
 app.get('/', function (req, res) {
 	res.status(200).end("ROOT");
