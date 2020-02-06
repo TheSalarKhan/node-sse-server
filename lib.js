@@ -1,6 +1,7 @@
 function debugLog(objToLog) {
     if(process.env.DEBUG_LOGS === "true") {
-        console.log(objToLog);
+        console.log((new Date().getTime() | 0));
+	console.log(objToLog);
     }
 }
 
@@ -123,6 +124,9 @@ function doInitialSSESetup(req, res) {
     // So, that's why this number.
     const MAX_SOCKET_TIMEOUT = 2147483647;
     // Initial setup for SSE.
+	// Disables the Nagle algorithm, data will not be buffered
+	// and will be sent each time socket.write() is called.
+	req.socket.setNoDelay(true);
 	req.socket.setTimeout(MAX_SOCKET_TIMEOUT);
 	res.writeHead(200, {
         'Access-Control-Allow-Origin': "*",

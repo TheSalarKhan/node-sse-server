@@ -4,7 +4,7 @@
   "description": "SSE based event streaming server for real time use cases.",
   "main": "app.js",
   "scripts": {
-    "start": "NODE_ENV=production PORT=9090 node app.js",
+    "start": "NODE_ENV=production PORT=9090 DEBUG_LOGS=true node app.js",
     "dev": "NODE_ENV=production PORT=9090 DEBUG_LOGS=true nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
