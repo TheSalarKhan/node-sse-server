@@ -117,17 +117,15 @@ function saveClientToChannel(channelName, clientId, req, res) {
 }
 
 function doInitialSSESetup(req, res) {
-    // Previously the timeout was set to Number.MAX_SAFE_INTEGER
-    // but on everyconnection the server would throw a
-    // "TimeoutOverflowWarning" saying that:
-    // "Timer duration was truncated to 2147483647."
-    // So, that's why this number.
-    const MAX_SOCKET_TIMEOUT = 2147483647;
     // Initial setup for SSE.
+    // Setting timeout to 0 disables idle timeout,
+    // so the socket will never close because of inactivity.
+    req.socket.setTimeout(0);
 	// Disables the Nagle algorithm, data will not be buffered
 	// and will be sent each time socket.write() is called.
-	req.socket.setNoDelay(true);
-	req.socket.setTimeout(MAX_SOCKET_TIMEOUT);
+    req.socket.setNoDelay(true);
+    // Enable TCP keep-alive probes.
+    req.socket.setKeepAlive(true);
 	res.writeHead(200, {
         'Access-Control-Allow-Origin': "*",
 		'Content-Type': 'text/event-stream',
