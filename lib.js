@@ -1,5 +1,3 @@
-var util = require('util');
-
 function debugLog(objToLog) {
     if(process.env.DEBUG_LOGS === "true") {
         console.log((new Date().getTime() | 0));
