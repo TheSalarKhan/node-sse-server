@@ -1,3 +1,5 @@
+var util = require('util');
+
 function debugLog(objToLog) {
     if(process.env.DEBUG_LOGS === "true") {
         console.log((new Date().getTime() | 0));
@@ -10,9 +12,10 @@ function debugLog(objToLog) {
  *  'channel1': {
  *      lastValue: "last_published_value_here",
  *      clients: {
- *          "client1": client1ResObject,
- *          "client2": client2ResObject,
- *          "client3": client3ResObject
+ *          / *  Against each client we are saving a list of sockets, because the client maybe connected from multiple browser-tabs/devices  * /
+ *          "client1": [ client1ResObject, client1ResObject2 ],
+ *          "client2": [ client2ResObject, client2ResObject2 ],
+ *          "client3": [ client3ResObject ]
  *      }
  *   },
  *  'channel2': {
@@ -30,7 +33,7 @@ let channels = {};
  * @param {string} eventType name of the event
  * @param {string} payload string to publish to the client.
  */
-function publishDataToSingleClient(channelName, res, eventType, payload) {
+function publishDataToSingleSocket(channelName, res, eventType, payload) {
     const dataToWrite = JSON.stringify({ channelName, type: eventType, payload: payload+"" });
     res.write(`event: ${eventType}\n`)
     res.write(`data: ${dataToWrite}\n\n`);
@@ -40,19 +43,32 @@ function publishDataToSingleClient(channelName, res, eventType, payload) {
 let connectedClients = {
     _clients: {},
     _broadcastChange: function() {
-        for(const [clientId, res] of Object.entries(this._clients)) {
-            publishDataToSingleClient(undefined, res, "online-presence", JSON.stringify(Object.keys(this._clients)));
+        for(const [clientId, sockets] of Object.entries(this._clients)) {
+            for(res of sockets) {
+                publishDataToSingleSocket(undefined, res, "online-presence", JSON.stringify(Object.keys(this._clients)));
+            }
         }
     },
     addClientAndNotifyOthers: function(clientId, res) {
-        if(this._clients[clientId]) return;
-        this._clients[clientId] = res;
+        if(!this._clients[clientId]) {
+            this._clients[clientId] = [res];
+        } else {
+            this._clients[clientId].push(res);
+        }
         this._broadcastChange();
     },
-    removeClientAndNotifyOthers: function(clientId) {
-        if(!this._clients[clientId]) return;
-        delete this._clients[clientId];
-        this._broadcastChange();
+    removeClientAndNotifyOthers: function(clientId, res) {
+        // If there's no such clientId, or if there are no sockets against
+        // the id simply return.
+        if(!this._clients[clientId] || !this._clients[clientId].length) return;
+        // Remove the res object from the clients list.
+        this._clients[clientId] = this._clients[clientId].filter(v => v !== res);
+        // Check now if the list is of 0 length, then delete the whole
+        // clientId and broadcast the change.
+        if(!this._clients[clientId].length) {
+            delete this._clients[clientId];
+            this._broadcastChange();
+        }
     }
 };
 
@@ -83,21 +99,25 @@ function saveClientToChannel(channelName, clientId, req, res) {
         // client list add, this client as the first client.
         const clientsForThisChannel = channels[channelName].clients;
         if(clientsForThisChannel) {
-            // save the res socket for the client to the
+            // save the res socket for the clientId to the
             // client list.
-            clientsForThisChannel[clientId] = res;
+            if(clientsForThisChannel[clientId]){
+                clientsForThisChannel[clientId].push(res);
+            } else {
+                clientsForThisChannel[clientId] = [res];
+            }
         } else {
             // No clients. Add this client as the
             // first client.
             channels[channelName].clients = {
-                [clientId]: res
+                [clientId]: [res]
             };
         }
     } else {
         // 1b) If the channel does not exist, creat the channel, set "{}" as the lastValue,
         // add the client in the client list.
         createChannel(channelName, "{}", {
-            [clientId]: res
+            [clientId]: [res]
         });
     }
 
@@ -105,11 +125,17 @@ function saveClientToChannel(channelName, clientId, req, res) {
     // the client disconnects.
     req.on("close", function () {
         const clients = channels[channelName].clients;
-        delete clients[clientId];
+        // remove the associated 'res' from the clients list against the clientId.
+        clients[clientId] = clients[clientId].filter(v => v !== res);
+        // check if there are no more sockets left for this clientId then delete it
+        // from the channel.
+        if(!clients[clientId].length) {
+            delete clients[clientId];
+            debugLog(`Client ${clientId} removed `);
+            debugLog(channels);
+        }
         // Also remove the client from the connectedClients singleton.
-        connectedClients.removeClientAndNotifyOthers(clientId);
-        debugLog(`Client ${clientId} removed `);
-        debugLog(channels);
+        connectedClients.removeClientAndNotifyOthers(clientId, res);
     });
 
     debugLog(`Client ${clientId} added `);
@@ -148,12 +174,12 @@ module.exports.registerClient = function (channelNames, clientId, req, res) {
     doInitialSSESetup(req, res);
     // Send the client id to the client for debugging purposes.
     // TODO: Need to add logging for client trace.
-    publishDataToSingleClient(undefined, res, "registered", JSON.stringify({ clientId }));
+    publishDataToSingleSocket(undefined, res, "registered", JSON.stringify({ clientId }));
     // Add the client to all the requested channels
     for(const channelName of channelNames) {
         saveClientToChannel(channelName, clientId, req, res);
         const lastChannelEvent = channels[channelName].lastEvent;
-        publishDataToSingleClient(channelName, res, "lastEvent", lastChannelEvent);
+        publishDataToSingleSocket(channelName, res, "lastEvent", lastChannelEvent);
     }
     // Finally, add the client to the connectedClients singleton and notify all
     // connected users.
@@ -175,7 +201,9 @@ module.exports.publishDataToChannel = function (channelName, eventType, payload)
         channel.lastEvent = JSON.stringify({ type: eventType, payload });
         const clients = channel.clients;
         for (clientId in clients) {
-            publishDataToSingleClient(channelName, clients[clientId], eventType, payload);
+            for(res of clients[clientId]) {
+                publishDataToSingleSocket(channelName, res, eventType, payload);
+            }
         };
     }
 }

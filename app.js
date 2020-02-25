@@ -54,7 +54,7 @@ app.post('/publish/', function(req, res) {
     for(const event of events) {
         const {channelName, type, payload} = event;
         if(!channelName || !type || !payload) {
-            res.status(400).end("Bad Request: 'channelName', 'eventType', and 'payload' are three required json fields in body.");
+            res.status(400).end("Bad Request: 'channelName', 'type', and 'payload' are three required json fields in an event.");
         }
         try {
             lib.publishDataToChannel(channelName, type, payload);
