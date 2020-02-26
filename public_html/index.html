@@ -4,7 +4,7 @@
 			return Math.floor((Math.random() * y) + x);
 		}
 		const channelsToSubscribe = ["channel1", "channel2"];
-		const source = new EventSource(`http://localhost:9090/subscribe/?channels=${encodeURIComponent(channelsToSubscribe.join(","))}&clientId=${encodeURIComponent("5df2")}${encodeURIComponent(getRandomNumberBetweenRange(1, 100))}`);
+		const source = new EventSource(`http://localhost:9090/subscribe/?channels=${encodeURIComponent(channelsToSubscribe.join(","))}&clientId=${encodeURIComponent("5df2")}${encodeURIComponent(getRandomNumberBetweenRange(1, 2))}`);
 
 		function _getEventData(event) {
 			const data = JSON.parse(event.data);
