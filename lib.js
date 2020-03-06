@@ -151,10 +151,11 @@ function doInitialSSESetup(req, res) {
     // Enable TCP keep-alive probes.
     req.socket.setKeepAlive(true);
 	res.writeHead(200, {
-        'Access-Control-Allow-Origin': "*",
+                'Access-Control-Allow-Origin': "*",
 		'Content-Type': 'text/event-stream',
 		'Cache-Control': 'no-cache',
-		'Connection': 'keep-alive'
+		'Connection': 'keep-alive',
+		'X-Accel-Buffering': 'no'
 	});
     res.write('\n');
 }
