@@ -35,6 +35,21 @@ app.get('/subscribe', function (req, res) {
     lib.registerClient(channelNames, newClientId, req, res);
 });
 
+app.get('/lastEvent', function (req, res) {
+    if(!req.query.channel) {
+        res.status(400).end("Bad Request");
+        return;
+    }
+
+    const channelName = req.query.channel;
+
+    // Get last event
+    const response = lib.getLastEvent(channelName);
+
+    res.status(200).json({ response });
+
+});
+
 app.post('/publish/', function(req, res) {
     let { events } = req.body;
     if(!events) {

@@ -185,6 +185,11 @@ module.exports.registerClient = function (channelNames, clientId, req, res) {
     connectedClients.addClientAndNotifyOthers(clientId, res);
 }
 
+ module.exports.getLastEvent = function (channelName) {
+    const lastChannelEvent = channels[channelName] && channels[channelName].lastEvent;
+    return lastChannelEvent;
+}
+
 module.exports.reservedEvents = ["registered", "lastEvent", "online-presence"];
 
 
